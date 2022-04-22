@@ -1,7 +1,8 @@
 import 'dart:io';
-
+import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:custom_switch/custom_switch.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class Home extends StatefulWidget {
@@ -14,6 +15,23 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   List<bool> isSelected = [true, false];
   bool status = false;
+
+  void bluetoothConnect() async{
+    try {
+      BluetoothConnection connection = await BluetoothConnection.toAddress(address);
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: "$e",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.Bottom,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0
+    );
+    }
+  }
+
   @override
   void initState() {
     // this is for 3 buttons, add "false" same as the number of buttons here
@@ -54,7 +72,6 @@ class _HomeState extends State<Home> {
           const Action(action: "Fetch"),
           Button(size: size, actionString: "Fetch", action: () {}),
           const Action(action: "Bluetooth"),
-          
         ],
       ),
     )));
