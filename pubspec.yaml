@@ -35,7 +35,6 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
   google_fonts: ^2.3.1
-  custom_switch: ^0.0.1
   flutter_bluetooth_serial: ^0.4.0
   fluttertoast: ^8.0.9
 
