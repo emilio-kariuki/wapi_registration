@@ -53,29 +53,7 @@ class _HomeState extends State<Home> {
           const Action(action: "Fetch"),
           Button(size: size, actionString: "Fetch", action: () {}),
           const Action(action: "Bluetooth"),
-          ToggleButtons(
-            children: const [
-              Icon(Icons.bluetooth_connected),
-              Icon(Icons.bluetooth_disabled)
-            ],
-            isSelected: isSelected,
-            onPressed: (int index) {
-              setState(() {
-                for (int index = 0; index < isSelected.length; index++) {
-                  if (index == index) {
-                    isSelected[index] = true;
-                  } else {
-                    isSelected[index] = false;
-                  }
-                }
-              });
-            },
-            color: Colors.green,
-            disabledColor: Colors.green,
-            selectedColor: const Color.fromARGB(255, 4, 67, 119),
-            borderRadius: BorderRadius.circular(30),
-            renderBorder: false,
-          ),
+          
         ],
       ),
     )));
