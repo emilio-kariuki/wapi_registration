@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:custom_switch/custom_switch.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -12,7 +13,7 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   List<bool> isSelected = [true, false];
-
+  bool status = false;
   @override
   void initState() {
     // this is for 3 buttons, add "false" same as the number of buttons here
