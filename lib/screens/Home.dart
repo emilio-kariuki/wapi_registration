@@ -124,28 +124,19 @@ class _HomeState extends State<Home> {
                       : const Text("Discovered Devices")
                 ],
               ),
-              Container(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(
-                      flex: 1,
-                      child: ListView.builder(
-                        itemCount: results.length,
-                        itemBuilder: (BuildContext context, index) {
-                          BluetoothDiscoveryResult result = results[index];
-                          return BluetoothDeviceListEntry(
-                            device: result.device,
-                            rssi: result.rssi,
-                            onTap: () {
-                              Navigator.of(context).pop(result.device);
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
+              ListView.builder(
+                shrinkWrap: true,
+                itemCount: results.length,
+                itemBuilder: (BuildContext context, index) {
+                  BluetoothDiscoveryResult result = results[index];
+                  return BluetoothDeviceListEntry(
+                    device: result.device,
+                    rssi: result.rssi,
+                    onTap: () {
+                      Navigator.of(context).pop(result.device);
+                    },
+                  );
+                },
               ),
             ],
           ),
