@@ -1,8 +1,11 @@
+// ignore_for_file: deprecated_member_use
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
-
+import 'package:wapi/screens/discovery.dart';
+import "chat.dart";
 
 class MainPage extends StatefulWidget {
   @override
@@ -31,7 +34,7 @@ class _MainPage extends State<MainPage> {
       if (await FlutterBluetoothSerial.instance == BluetoothBondState.bonded) {
         return false;
       }
-      await Future.delayed(Duration(milliseconds: 0xDD));
+      await Future.delayed(const Duration(milliseconds: 0xDD));
       return true;
     }).then((_) {
       // Update the address field
@@ -73,8 +76,8 @@ class _MainPage extends State<MainPage> {
       body: Container(
         child: ListView(
           children: <Widget>[
-            Divider(),
-            ListTile(title: const Text('General')),
+            const Divider(),
+            const ListTile(title: Text('General')),
             SwitchListTile(
               title: const Text('Enable Bluetooth'),
               value: _bluetoothState.isEnabled,
@@ -82,10 +85,11 @@ class _MainPage extends State<MainPage> {
                 // Do the request and update with the true value then
                 future() async {
                   // async lambda seems to not working
-                  if (value)
+                  if (value) {
                     await FlutterBluetoothSerial.instance.requestEnable();
-                  else
+                  } else {
                     await FlutterBluetoothSerial.instance.requestDisable();
+                  }
                 }
 
                 future().then((_) {
@@ -112,7 +116,7 @@ class _MainPage extends State<MainPage> {
               subtitle: Text(_name),
               onLongPress: null,
             ),
-            Divider(),
+            const Divider(),
             ListTile(
               title: TextButton(
                   child:
@@ -122,21 +126,31 @@ class _MainPage extends State<MainPage> {
                         await Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) {
-                          return DiscoveryPage();
+                          return const DiscoveryPage();
                         },
                       ),
                     );
 
-                    // if (selectedDevice != null) {
-                    //   print('Discovery -> selected ' + selectedDevice.address);
-                    //   _startChat(context, selectedDevice);
-                    // } else {
-                    //   print('Discovery -> no device selected');
-                    // }
+                    if (selectedDevice != null) {
+                      print('Discovery -> selected ' + selectedDevice.address);
+                      _startChat(context, selectedDevice);
+                    } else {
+                      print('Discovery -> no device selected');
+                    }
                   }),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _startChat(BuildContext context, BluetoothDevice server) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) {
+          return ChatPage(server: server);
+        },
       ),
     );
   }
