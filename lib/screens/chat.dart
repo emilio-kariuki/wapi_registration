@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print, prefer_typing_uninitialized_variables
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -22,15 +24,15 @@ class _Message {
 }
 
 class _ChatPage extends State<ChatPage> {
-  static final clientID = 0;
+  static const clientID = 0;
   var connection; //BluetoothConnection
 
   List<_Message> messages = [];
   String _messageBuffer = '';
 
   final TextEditingController textEditingController =
-      new TextEditingController();
-  final ScrollController listScrollController = new ScrollController();
+      TextEditingController();
+  final ScrollController listScrollController = ScrollController();
 
   bool isConnecting = true;
   bool isDisconnecting = false;
@@ -59,7 +61,7 @@ class _ChatPage extends State<ChatPage> {
         } else {
           print('Disconnected remotely!');
         }
-        if (this.mounted) {
+        if (mounted) {
           setState(() {});
         }
       });
