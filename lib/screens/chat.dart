@@ -30,12 +30,12 @@ class _ChatPage extends State<ChatPage> {
   List<_Message> messages = [];
   String _messageBuffer = '';
 
-  final TextEditingController textEditingController =
-      TextEditingController();
+  final TextEditingController textEditingController = TextEditingController();
   final ScrollController listScrollController = ScrollController();
 
   bool isConnecting = true;
   bool isDisconnecting = false;
+  
 
   @override
   void initState() {

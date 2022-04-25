@@ -1,4 +1,4 @@
-// ignore_for_file: unrelated_type_equality_checks
+// ignore_for_file: unrelated_type_equality_checks, deprecated_member_use
 
 import 'dart:async';
 import 'dart:ffi';
@@ -9,8 +9,9 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:wapi/screens/connect.dart';
 import 'package:wapi/screens/entry.dart';
+
+import 'DetailPage.dart';
 
 class Home extends StatefulWidget {
   final bool start;
@@ -20,97 +21,66 @@ class Home extends StatefulWidget {
   State<Home> createState() => _HomeState();
 }
 
-class _HomeState extends State<Home> {
-  List<bool> isSelected = [true, false];
-  bool status = false;
-
-  late StreamSubscription<BluetoothDiscoveryResult> _streamSubscription;
-  List<BluetoothDiscoveryResult> results = [];
-  late bool isDiscovering;
+class _HomeState extends State<Home> with WidgetsBindingObserver {
   BluetoothState _bluetoothState = BluetoothState.UNKNOWN;
 
-  String _address = "...";
-  String _name = "...";
+  List<BluetoothDevice> devices = <BluetoothDevice>[];
 
   @override
   void initState() {
     super.initState();
-
-    // Get current state
-    FlutterBluetoothSerial.instance.state.then((state) {
-      setState(() {
-        _bluetoothState = state;
-      });
-    });
-
-    Future.doWhile(() async {
-      // Wait if adapter not enabled
-      if (FlutterBluetoothSerial.instance == BluetoothBondState.bonded) {
-        return false;
-      }
-      await Future.delayed(const Duration(milliseconds: 0xDD));
-      return true;
-    }).then((_) {
-      // Update the address field
-      FlutterBluetoothSerial.instance.address.then((address) {
-        setState(() {
-          _address = address!;
-        });
-      });
-    });
-
-    FlutterBluetoothSerial.instance.name.then((name) {
-      setState(() {
-        _name = name!;
-      });
-    });
-
-    // Listen for futher state changes
-    FlutterBluetoothSerial.instance
-        .onStateChanged()
-        .listen((BluetoothState state) {
-      setState(() {
-        _bluetoothState = state;
-      });
-    });
-    isDiscovering = widget.start;
-    if (isDiscovering) {
-      _startDiscovery();
-    }
+    WidgetsBinding.instance?.addObserver(this);
+    _getBTState();
+    _stateChangeListener();
   }
 
   @override
   void dispose() {
-    FlutterBluetoothSerial.instance.setPairingRequestHandler(null);
+    WidgetsBinding.instance?.removeObserver(this);
     super.dispose();
   }
-  void _close() {
-    setState(() {
-        isDiscovering = false;
-      });
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state.index == 0) {
+      //resume
+      if (_bluetoothState.isEnabled) {
+        _listBondedDevices();
+      }
+    }
   }
 
-  void _restartDiscovery() async {
-    await FlutterBluetoothSerial.instance.cancelDiscovery();
-    setState(() {
-      results.clear();
-      isDiscovering = true;
+  _getBTState() {
+    FlutterBluetoothSerial.instance.state.then((state) {
+      _bluetoothState = state;
+      if (_bluetoothState.isEnabled) {
+        _listBondedDevices();
+      }
+      setState(() {});
     });
-    _startDiscovery();
   }
 
-  void _startDiscovery() async {
-    await FlutterBluetoothSerial.instance.cancelDiscovery();
-    _streamSubscription =
-        FlutterBluetoothSerial.instance.startDiscovery().listen((r) {
-      setState(() {
-        results.add(r);
-      });
+  _stateChangeListener() {
+    FlutterBluetoothSerial.instance
+        .onStateChanged()
+        .listen((BluetoothState state) {
+      _bluetoothState = state;
+      if (_bluetoothState.isEnabled) {
+        _listBondedDevices();
+      } else {
+        devices.clear();
+      }
+      print("State isEnabled: ${state.isEnabled}");
+      setState(() {});
     });
-    _streamSubscription.onDone(() {
-      setState(() {
-        isDiscovering = false;
-      });
+  }
+
+  _listBondedDevices() {
+    FlutterBluetoothSerial.instance
+        .getBondedDevices()
+        .then((List<BluetoothDevice> bondedDevices) {
+      devices = bondedDevices;
+      setState(() {});
     });
   }
 
@@ -147,18 +117,19 @@ class _HomeState extends State<Home> {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Container(
-              height: size.height * 0.17,
+                height: size.height * 0.17,
                 decoration: BoxDecoration(
-                  border: Border.all(width: 1, color: const Color.fromARGB(255, 8, 5, 14)),
+                    border: Border.all(
+                        width: 1, color: const Color.fromARGB(255, 8, 5, 14)),
                     color: const Color.fromARGB(255, 189, 189, 189),
                     borderRadius: BorderRadius.circular(20)),
                 child: Column(
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
-                      children: const[
+                      children: const [
                         SizedBox(width: 10),
-                         Action(action: "Fetch",color: Colors.black),
+                        Action(action: "Fetch", color: Colors.black),
                       ],
                     ),
                     Padding(
@@ -168,9 +139,9 @@ class _HomeState extends State<Home> {
                           const SizedBox(width: 15),
                           Container(
                             decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(width: 2, color: Colors.black)
-                            ),
+                                shape: BoxShape.circle,
+                                border:
+                                    Border.all(width: 2, color: Colors.black)),
                             child: const CircleAvatar(
                               radius: 40,
                               backgroundImage: AssetImage("assets/globe.jpg"),
@@ -178,19 +149,17 @@ class _HomeState extends State<Home> {
                           ),
                           const SizedBox(width: 15),
                           Button(
-                            width: 0.55,
+                              width: 0.55,
                               size: size,
                               actionString: "Fetch",
-                              action: () {
-                                Get.to(MainPage());
-                              }),
+                              action: () {}),
                         ],
                       ),
                     ),
                   ],
                 )),
           ),
-          const Action(action: "Bluetooth",color: Colors.black),
+          const Action(action: "Bluetooth", color: Colors.black),
           Padding(
             padding: const EdgeInsets.all(10.0),
             child: Container(
@@ -223,58 +192,46 @@ class _HomeState extends State<Home> {
               ),
             ),
           ),
+          ListTile(
+            title: const Text('Bluetooth status'),
+            subtitle: Text(_bluetoothState.toString()),
+            trailing: RaisedButton(
+              child: const Text('Settings'),
+              onPressed: () {
+                FlutterBluetoothSerial.instance.openSettings();
+              },
+            ),
+          ),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: const [
-              Action(action: "The devices connected are: ",color: Colors.black),
-            ],
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              isDiscovering
-              ? FittedBox(
-                  child: Container(
-                    margin: const EdgeInsets.all(16.0),
-                    child: const CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                          Color.fromARGB(255, 116, 13, 13)),
-                    ),
-                  ),
-                )
-              : Button(
-                width: 0.4,
-                  size: size,
-                  actionString: "Connect",
-                  action: _restartDiscovery),
-
-              Button(
-                width: 0.4,
-                  size: size,
-                  actionString: "Close",
-                  action: _close),
+              Action(
+                  action: "The devices connected are: ", color: Colors.black),
             ],
           ),
           SizedBox(
             height: size.height * 0.008,
           ),
-          ListView.builder(
-            shrinkWrap: true,
-            itemCount: results.length,
-            itemBuilder: (BuildContext context, index) {
-              BluetoothDiscoveryResult result = results[index];
-              return BluetoothDeviceListEntry(
-                device: result.device,
-                rssi: result.rssi,
-                onTap: () {
-                  Navigator.of(context).pop(result.device);
-                },
-              );
-            },
-          ),
+          ListView(
+              shrinkWrap: true,
+              children: devices
+                  .map((_device) => BluetoothDeviceListEntry(
+                        device: _device,
+                        enabled: true,
+                        // rssi: _device.RSSI,
+                        onTap: () {
+                          _startCameraConnect(context, _device);
+                        },
+                      ))
+                  .toList()),
         ],
       ),
     )));
+  }
+  void _startCameraConnect(BuildContext context, BluetoothDevice server) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+      return DetailPage(server: server);
+    }));
   }
 }
 
@@ -286,7 +243,7 @@ class Button extends StatelessWidget {
     Key? key,
     required this.size,
     required this.action,
-    required this.actionString, 
+    required this.actionString,
     required this.width,
   }) : super(key: key);
 
@@ -326,7 +283,8 @@ class Action extends StatelessWidget {
   final Color color;
   const Action({
     Key? key,
-    required this.action, required this.color,
+    required this.action,
+    required this.color,
   }) : super(key: key);
 
   @override
@@ -342,4 +300,5 @@ class Action extends StatelessWidget {
       ]),
     );
   }
+  
 }
