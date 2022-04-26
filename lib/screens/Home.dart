@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:wapi/Build/build_lottie.dart';
 import 'package:wapi/screens/entry.dart';
 
 import 'DetailPage.dart';
@@ -88,146 +89,197 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     return Scaffold(
+        backgroundColor: Color.fromARGB(255, 255, 255, 255),
         body: SingleChildScrollView(
             child: SafeArea(
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  "wapi",
-                  style: GoogleFonts.roboto(
-                      fontSize: 20,
-                      fontWeight: FontWeight.normal,
-                      color: Colors.black),
-                ),
-                Text(
-                  "Registration",
-                  style: GoogleFonts.roboto(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Container(
-                height: size.height * 0.17,
-                decoration: BoxDecoration(
-                    border: Border.all(
-                        width: 1, color: const Color.fromARGB(255, 8, 5, 14)),
-                    color: const Color.fromARGB(255, 189, 189, 189),
-                    borderRadius: BorderRadius.circular(20)),
-                child: Column(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 10, bottom: 15),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: const [
-                        SizedBox(width: 10),
-                        Action(action: "Fetch", color: Colors.black),
-                      ],
+                    Text(
+                      "wapi",
+                      style: GoogleFonts.roboto(
+                          fontSize: 20,
+                          fontWeight: FontWeight.normal,
+                          color: Color.fromARGB(255, 255, 255, 255)),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Row(
-                        children: [
-                          const SizedBox(width: 15),
-                          Container(
-                            decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border:
-                                    Border.all(width: 2, color: Colors.black)),
-                            child: const CircleAvatar(
-                              radius: 40,
-                              backgroundImage: AssetImage("assets/globe.jpg"),
-                            ),
-                          ),
-                          const SizedBox(width: 15),
-                          Button(
-                              width: 0.55,
-                              size: size,
-                              actionString: "Fetch",
-                              action: () {}),
-                        ],
-                      ),
+                    Text(
+                      "Registration",
+                      style: GoogleFonts.roboto(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: const Color.fromARGB(255, 255, 255, 255)),
                     ),
                   ],
-                )),
-          ),
-          const Action(action: "Bluetooth", color: Colors.black),
-          Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: Container(
-              padding: const EdgeInsets.all(5),
-              decoration: BoxDecoration(
-                  color: Colors.grey, borderRadius: BorderRadius.circular(20)),
-              child: SwitchListTile(
-                activeColor: const Color.fromARGB(255, 22, 95, 3),
-                title: Text('Enable Bluetooth',
-                    style: GoogleFonts.roboto(
-                        fontSize: 20,
-                        color: Colors.black,
-                        fontWeight: FontWeight.w500)),
-                value: _bluetoothState.isEnabled,
-                onChanged: (bool value) {
-                  // Do the request and update with the true value then
-                  future() async {
-                    // async lambda seems to not working
-                    if (value) {
-                      await FlutterBluetoothSerial.instance.requestEnable();
-                    } else {
-                      await FlutterBluetoothSerial.instance.requestDisable();
-                    }
-                  }
-
-                  future().then((_) {
-                    setState(() {});
-                  });
-                },
+                ),
               ),
-            ),
-          ),
-          ListTile(
-            title: const Text('Bluetooth status'),
-            subtitle: Text(_bluetoothState.toString()),
-            trailing: RaisedButton(
-              child: const Text('Settings'),
-              onPressed: () {
-                FlutterBluetoothSerial.instance.openSettings();
-              },
-            ),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              Action(
-                  action: "The devices connected are: ", color: Colors.black),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Container(
+                    height: size.height * 0.18,
+                    decoration: BoxDecoration(
+                        border: Border.all(
+                            width: 1,
+                            color: const Color.fromARGB(255, 8, 5, 14)),
+                        color: const Color.fromARGB(255, 255, 255, 255),
+                        borderRadius: BorderRadius.circular(20)),
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(left: 20),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: const[
+                              SizedBox(width: 10,),
+                              LottieBox(assetUrl: "assets/fetch.json"),
+                              Action(
+                                  fontSize: 25,
+                                  action: "Fetch",
+                                  color: Color.fromARGB(255, 0, 0, 0)),
+                                  
+                            ],
+                          ),
+                        ),
+                        Row(
+                            children: [
+                              Expanded(
+                                child: Container(
+                                    margin: const EdgeInsets.only(
+                                        left: 20.0, right: 20.0),
+                                    child: const Divider(
+                                      color: Color.fromARGB(255, 0, 0, 0),
+                                      height: 5,
+                                      thickness: 1,
+                                    )),
+                              ),
+                            ],
+                          ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              const SizedBox(width: 15),
+                              Container(
+                                decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                        width: 2, color: Colors.black)),
+                                child: const CircleAvatar(
+                                  radius: 30,
+                                  backgroundImage:
+                                      AssetImage("assets/globe.jpg"),
+                                ),
+                              ),
+                              const SizedBox(width: 15),
+                              Button(
+                                  width: 0.55,
+                                  size: size,
+                                  actionString: "Fetch",
+                                  action: () {}),
+                            ],
+                          ),
+                        ),
+                      ],
+                    )),
+              ),
+              const Action(
+                action: "Bluetooth",
+                color: Colors.black,
+                fontSize: 20,
+              ),
+              Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: Container(
+                  padding: const EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                      color: Colors.grey,
+                      borderRadius: BorderRadius.circular(20)),
+                  child: SwitchListTile(
+                    activeColor: const Color.fromARGB(255, 22, 95, 3),
+                    title: Text('Enable Bluetooth',
+                        style: GoogleFonts.roboto(
+                            fontSize: 20,
+                            color: Colors.black,
+                            fontWeight: FontWeight.w500)),
+                    value: _bluetoothState.isEnabled,
+                    onChanged: (bool value) {
+                      // Do the request and update with the true value then
+                      future() async {
+                        // async lambda seems to not working
+                        if (value) {
+                          await FlutterBluetoothSerial.instance.requestEnable();
+                        } else {
+                          await FlutterBluetoothSerial.instance
+                              .requestDisable();
+                        }
+                      }
+
+                      future().then((_) {
+                        setState(() {});
+                      });
+                    },
+                  ),
+                ),
+              ),
+              ListTile(
+                title: const Text('Bluetooth status'),
+                subtitle: Text(_bluetoothState.toString()),
+                trailing: RaisedButton(
+                  child: const Text('Settings'),
+                  onPressed: () {
+                    FlutterBluetoothSerial.instance.openSettings();
+                  },
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Action(
+                    action: "The devices connected are: ",
+                    color: Colors.black,
+                    fontSize: 20,
+                  ),
+                ],
+              ),
+              SizedBox(
+                height: size.height * 0.008,
+              ),
+              ListView(
+                  shrinkWrap: true,
+                  children: devices
+                      .map((_device) => BluetoothDeviceListEntry(
+                            device: _device,
+                            enabled: true,
+                            // rssi: _device.RSSI,
+                            onTap: () {
+                              _startCameraConnect(context, _device);
+                            },
+                          ))
+                      .toList()),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Button(
+                      width: 0.35,
+                      size: size,
+                      actionString: "Fetch",
+                      action: () {}),
+                  Button(
+                      width: 0.35,
+                      size: size,
+                      actionString: "Fetch",
+                      action: () {}),
+                ],
+              ),
             ],
           ),
-          SizedBox(
-            height: size.height * 0.008,
-          ),
-          ListView(
-              shrinkWrap: true,
-              children: devices
-                  .map((_device) => BluetoothDeviceListEntry(
-                        device: _device,
-                        enabled: true,
-                        // rssi: _device.RSSI,
-                        onTap: () {
-                          _startCameraConnect(context, _device);
-                        },
-                      ))
-                  .toList()),
-        ],
-      ),
-    )));
+        )));
   }
+
   void _startCameraConnect(BuildContext context, BluetoothDevice server) {
     Navigator.of(context).push(MaterialPageRoute(builder: (context) {
       return DetailPage(server: server);
@@ -281,10 +333,12 @@ class Button extends StatelessWidget {
 class Action extends StatelessWidget {
   final String action;
   final Color color;
+  final double fontSize;
   const Action({
     Key? key,
     required this.action,
     required this.color,
+    required this.fontSize,
   }) : super(key: key);
 
   @override
@@ -295,10 +349,9 @@ class Action extends StatelessWidget {
         Text(
           action,
           style: GoogleFonts.roboto(
-              fontSize: 20, fontWeight: FontWeight.w500, color: color),
+              fontSize: fontSize, fontWeight: FontWeight.w500, color: color),
         ),
       ]),
     );
   }
-  
 }

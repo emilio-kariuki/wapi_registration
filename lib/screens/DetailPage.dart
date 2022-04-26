@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print, unnecessary_null_comparison
+
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -21,7 +23,7 @@ class _DetailPageState extends State<DetailPage> {
   late BluetoothConnection connection;
   bool isConnecting = true;
 
-  bool get isConnected => connection != null && connection.isConnected;
+  bool get isConnected => connection.isConnected;
   bool isDisconnecting = false;
 
   late String _selectedFrameSize;
@@ -37,7 +39,7 @@ class _DetailPageState extends State<DetailPage> {
     super.initState();
     _selectedFrameSize = '0';
     _getBTConnection();
-    _timer = new RestartableTimer(Duration(seconds: 1), _drawImage);
+    
   }
 
   @override
@@ -63,7 +65,7 @@ class _DetailPageState extends State<DetailPage> {
         } else {
           print('Disconnecting remotely');
         }
-        if (this.mounted) {
+        if (mounted) {
           setState(() {});
         }
         Navigator.of(context).pop();
@@ -73,27 +75,9 @@ class _DetailPageState extends State<DetailPage> {
     });
   }
 
-  _drawImage() {
-    if (chunks.length == 0 || contentLength == 0) return;
-
-    _bytes = Uint8List(contentLength);
-    int offset = 0;
-    for (final List<int> chunk in chunks) {
-      _bytes.setRange(offset, offset + chunk.length, chunk);
-      offset += chunk.length;
-    }
-
-    setState(() {});
-
-    SVProgressHUD.showInfo(status: "Downloaded...");
-    SVProgressHUD.setMaximumDismissTimeInterval(1000);
-
-    contentLength = 0;
-    chunks.clear();
-  }
 
   void _onDataReceived(Uint8List data) {
-    if (data != null && data.length > 0) {
+    if (data.isNotEmpty) {
       chunks.add(data);
       contentLength += data.length;
       _timer.reset();
@@ -104,7 +88,7 @@ class _DetailPageState extends State<DetailPage> {
 
   void _sendMessage(String text) async {
     text = text.trim();
-    if (text.length > 0) {
+    if (text.isNotEmpty) {
       try {
         // connection.output.add(utf8.encode(text));
         // SVProgressHUD.show("Requesting...");
@@ -135,7 +119,7 @@ class _DetailPageState extends State<DetailPage> {
                     photoFrame(),
                   ],
                 )
-              : Center(
+              : const Center(
                   child: Text(
                     "Connecting...",
                     style: TextStyle(
@@ -176,8 +160,8 @@ class _DetailPageState extends State<DetailPage> {
         },
         color: Colors.red,
         textColor: Colors.white,
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
+        child: const Padding(
+          padding:  EdgeInsets.all(8.0),
           child: Text(
             'TAKE A SHOT',
             style: TextStyle(fontSize: 24),
