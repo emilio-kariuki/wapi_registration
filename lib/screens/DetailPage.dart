@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:async/async.dart';
-import 'package:dropdown_formfield/dropdown_formfield.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:flutter_svprogresshud/flutter_svprogresshud.dart';
@@ -26,8 +26,6 @@ class _DetailPageState extends State<DetailPage> {
   bool get isConnected => connection.isConnected;
   bool isDisconnecting = false;
 
-  late String _selectedFrameSize;
-
   List<List<int>> chunks = <List<int>>[];
   int contentLength = 0;
   late Uint8List _bytes;
@@ -37,9 +35,7 @@ class _DetailPageState extends State<DetailPage> {
   @override
   void initState() {
     super.initState();
-    _selectedFrameSize = '0';
     _getBTConnection();
-    
   }
 
   @override
@@ -53,6 +49,16 @@ class _DetailPageState extends State<DetailPage> {
     super.dispose();
   }
 
+  void _onDataReceived(Uint8List data) {
+    if (data != null && data.length > 0) {
+      chunks.add(data);
+      contentLength += data.length;
+      _timer.reset();
+    }
+
+    print("Data Length: ${data.length}, chunks: ${chunks.length}");
+  }
+
   _getBTConnection() {
     BluetoothConnection.toAddress(widget.server.address).then((_connection) {
       connection = _connection;
@@ -60,6 +66,11 @@ class _DetailPageState extends State<DetailPage> {
       isDisconnecting = false;
       setState(() {});
       connection.input?.listen(_onDataReceived).onDone(() {
+        isConnecting
+            ? Text('Connecting to ${widget.server.name} ...')
+            : isConnected
+                ? Text('Connected with ${widget.server.name}')
+                : Text('Disconnected with ${widget.server.name}');
         if (isDisconnecting) {
           print('Disconnecting locally');
         } else {
@@ -73,17 +84,6 @@ class _DetailPageState extends State<DetailPage> {
     }).catchError((error) {
       Navigator.of(context).pop();
     });
-  }
-
-
-  void _onDataReceived(Uint8List data) {
-    if (data.isNotEmpty) {
-      chunks.add(data);
-      contentLength += data.length;
-      _timer.reset();
-    }
-
-    print("Data Length: ${data.length}, chunks: ${chunks.length}");
   }
 
   void _sendMessage(String text) async {
@@ -101,102 +101,7 @@ class _DetailPageState extends State<DetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        backgroundColor: Colors.black,
-        appBar: AppBar(
-          title: (isConnecting
-              ? Text('Connecting to ${widget.server.name} ...')
-              : isConnected
-                  ? Text('Connected with ${widget.server.name}')
-                  : Text('Disconnected with ${widget.server.name}')),
-        ),
-        body: SafeArea(
-          child: isConnected
-              ? Column(
-                  children: <Widget>[
-                    selectFrameSize(),
-                    shotButton(),
-                    photoFrame(),
-                  ],
-                )
-              : const Center(
-                  child: Text(
-                    "Connecting...",
-                    style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white),
-                  ),
-                ),
-        ));
-  }
-
-  Widget photoFrame() {
-    return Expanded(
-      child: Container(
-        width: double.infinity,
-        child: _bytes != null
-            ? PhotoView(
-                enableRotation: true,
-                initialScale: PhotoViewComputedScale.covered,
-                maxScale: PhotoViewComputedScale.covered * 2.0,
-                minScale: PhotoViewComputedScale.contained * 0.8,
-                imageProvider: Image.memory(_bytes, fit: BoxFit.fitWidth).image,
-              )
-            : Container(),
-      ),
-    );
-  }
-
-  Widget shotButton() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: RaisedButton(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-            side: BorderSide(color: Colors.red)),
-        onPressed: () {
-          _sendMessage(_selectedFrameSize);
-        },
-        color: Colors.red,
-        textColor: Colors.white,
-        child: const Padding(
-          padding:  EdgeInsets.all(8.0),
-          child: Text(
-            'TAKE A SHOT',
-            style: TextStyle(fontSize: 24),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget selectFrameSize() {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.all(16),
-      child: DropDownFormField(
-        titleText: 'FRAMESIZE',
-        hintText: 'Please choose one',
-        value: _selectedFrameSize,
-        onSaved: (value) {
-          _selectedFrameSize = value;
-          setState(() {});
-        },
-        onChanged: (value) {
-          _selectedFrameSize = value;
-          setState(() {});
-        },
-        dataSource: [
-          {"value": "4", "display": "1600x1200"},
-          {"value": "3", "display": "1280x1024"},
-          {"value": "2", "display": "1024x768"},
-          {"value": "1", "display": "800x600"},
-          {"value": "0", "display": "640x480"},
-        ],
-        textField: 'display',
-        valueField: 'value',
-      ),
-    );
+    // TODO: implement build
+    return Container();
   }
 }

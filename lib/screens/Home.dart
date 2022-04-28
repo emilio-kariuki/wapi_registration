@@ -4,14 +4,15 @@ import 'dart:async';
 import 'dart:ffi';
 import 'dart:io';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
-
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:wapi/Build/build_lottie.dart';
 import 'package:wapi/screens/entry.dart';
-
+import 'package:async/async.dart';
+import 'dart:convert';
 import 'DetailPage.dart';
 
 class Home extends StatefulWidget {
@@ -23,9 +24,23 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> with WidgetsBindingObserver {
+  BluetoothDevice? server;
   BluetoothState _bluetoothState = BluetoothState.UNKNOWN;
-
+  BluetoothConnection? connection;
   List<BluetoothDevice> devices = <BluetoothDevice>[];
+  static List<int> list = 'Emilio'.codeUnits;
+  Uint8List bytes = Uint8List.fromList(list);
+  bool isConnecting = true;
+
+  bool get isConnected => connection!.isConnected;
+  bool isDisconnecting = false;
+
+  List<List<int>> chunks = <List<int>>[];
+  int contentLength = 0;
+  late Uint8List _bytes;
+
+  late RestartableTimer _timer;
+  // FlutterBluetoothSerialCharacteristic ?targetCharacteristic;
 
   @override
   void initState() {
@@ -33,6 +48,43 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     WidgetsBinding.instance?.addObserver(this);
     _getBTState();
     _stateChangeListener();
+  }
+
+  void _onDataReceived(Uint8List data) {
+    if (data != null && data.length > 0) {
+      chunks.add(data);
+      contentLength += data.length;
+      _timer.reset();
+    }
+
+    print("Data Length: ${data.length}, chunks: ${chunks.length}");
+  }
+
+  _getBTConnection() {
+    BluetoothConnection.toAddress(server?.address).then((_connection) {
+      connection = _connection;
+      isConnecting = false;
+      isDisconnecting = false;
+      setState(() {});
+      connection?.input?.listen(_onDataReceived).onDone(() {
+        isConnecting
+            ? Text('Connecting to ${server?.name} ...')
+            : isConnected
+                ? Text('Connected with ${server?.name}')
+                : Text('Disconnected with ${server?.name}');
+        if (isDisconnecting) {
+          print('Disconnecting locally');
+        } else {
+          print('Disconnecting remotely');
+        }
+        if (mounted) {
+          setState(() {});
+        }
+        Navigator.of(context).pop();
+      });
+    }).catchError((error) {
+      Navigator.of(context).pop();
+    });
   }
 
   @override
@@ -85,6 +137,11 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     });
   }
 
+  Future send(Uint8List data) async {
+    connection?.output.add(data);
+    await connection?.output.allSent;
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -95,7 +152,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.only(top: 10, bottom: 15),
+                padding: const EdgeInsets.only(top: 10, bottom: 10),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -104,59 +161,39 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                       style: GoogleFonts.roboto(
                           fontSize: 20,
                           fontWeight: FontWeight.normal,
-                          color: Color.fromARGB(255, 255, 255, 255)),
+                          color: const Color.fromARGB(255, 0, 0, 0)),
                     ),
                     Text(
                       "Registration",
                       style: GoogleFonts.roboto(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: const Color.fromARGB(255, 255, 255, 255)),
+                          color: const Color.fromARGB(255, 0, 0, 0)),
                     ),
                   ],
                 ),
               ),
+              // const Divider(
+              //   thickness: 2,
+              //   color: Colors.grey,
+              //   height:5,
+              // ),
+              const Action(
+                  fontSize: 25,
+                  action: "Fetch",
+                  color: Color.fromARGB(255, 0, 0, 0)),
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Container(
-                    height: size.height * 0.18,
+                    height: size.height * 0.12,
                     decoration: BoxDecoration(
                         border: Border.all(
                             width: 1,
                             color: const Color.fromARGB(255, 8, 5, 14)),
-                        color: const Color.fromARGB(255, 255, 255, 255),
+                        color: const Color.fromARGB(255, 146, 146, 146),
                         borderRadius: BorderRadius.circular(20)),
                     child: Column(
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.only(left: 20),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: const[
-                              SizedBox(width: 10,),
-                              LottieBox(assetUrl: "assets/fetch.json"),
-                              Action(
-                                  fontSize: 25,
-                                  action: "Fetch",
-                                  color: Color.fromARGB(255, 0, 0, 0)),
-                                  
-                            ],
-                          ),
-                        ),
-                        Row(
-                            children: [
-                              Expanded(
-                                child: Container(
-                                    margin: const EdgeInsets.only(
-                                        left: 20.0, right: 20.0),
-                                    child: const Divider(
-                                      color: Color.fromARGB(255, 0, 0, 0),
-                                      height: 5,
-                                      thickness: 1,
-                                    )),
-                              ),
-                            ],
-                          ),
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Row(
@@ -186,6 +223,11 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                       ],
                     )),
               ),
+              const Divider(
+                thickness: 2,
+                color: Color.fromARGB(255, 206, 206, 206),
+                height: 5,
+              ),
               const Action(
                 action: "Bluetooth",
                 color: Colors.black,
@@ -196,10 +238,10 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 child: Container(
                   padding: const EdgeInsets.all(5),
                   decoration: BoxDecoration(
-                      color: Colors.grey,
+                      color: const Color.fromARGB(255, 146, 146, 146),
                       borderRadius: BorderRadius.circular(20)),
                   child: SwitchListTile(
-                    activeColor: const Color.fromARGB(255, 22, 95, 3),
+                    activeColor: Color.fromARGB(255, 7, 65, 52),
                     title: Text('Enable Bluetooth',
                         style: GoogleFonts.roboto(
                             fontSize: 20,
@@ -225,15 +267,34 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                   ),
                 ),
               ),
+              const Divider(
+                thickness: 2,
+                color: Color.fromARGB(255, 206, 206, 206),
+                height: 5,
+              ),
               ListTile(
-                title: const Text('Bluetooth status'),
-                subtitle: Text(_bluetoothState.toString()),
-                trailing: RaisedButton(
-                  child: const Text('Settings'),
-                  onPressed: () {
-                    FlutterBluetoothSerial.instance.openSettings();
-                  },
+                title: const Action(
+                  action: "Bluetooth Status ",
+                  color: Colors.black,
+                  fontSize: 20,
                 ),
+                subtitle: Padding(
+                  padding: const EdgeInsets.only(left: 10),
+                  child: Text(_bluetoothState.toString()),
+                ),
+                trailing: Button(
+                    width: 0.35,
+                    size: size,
+                    actionString: "Settings",
+                    action: () {
+                      FlutterBluetoothSerial.instance.openSettings();
+                    }),
+                //
+              ),
+              const Divider(
+                thickness: 2,
+                color: Color.fromARGB(255, 206, 206, 206),
+                height: 5,
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -256,23 +317,33 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                             enabled: true,
                             // rssi: _device.RSSI,
                             onTap: () {
-                              _startCameraConnect(context, _device);
+                              // _startCameraConnect(context, _device);
+                              _getBTConnection();
                             },
                           ))
                       .toList()),
+              const Divider(
+                thickness: 2,
+                color: Color.fromARGB(255, 206, 206, 206),
+                height: 5,
+              ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   Button(
                       width: 0.35,
                       size: size,
-                      actionString: "Fetch",
-                      action: () {}),
+                      actionString: "Close",
+                      action: () {
+                        exit(0);
+                      }),
                   Button(
                       width: 0.35,
                       size: size,
-                      actionString: "Fetch",
-                      action: () {}),
+                      actionString: "Send",
+                      action: () {
+                        send(bytes);
+                      }),
                 ],
               ),
             ],
@@ -280,11 +351,11 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         )));
   }
 
-  void _startCameraConnect(BuildContext context, BluetoothDevice server) {
-    Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-      return DetailPage(server: server);
-    }));
-  }
+  // void _startCameraConnect(BuildContext context, BluetoothDevice server) {
+  //   Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+  //     return DetailPage(server: server);
+  //   }));
+  // }
 }
 
 class Button extends StatelessWidget {
