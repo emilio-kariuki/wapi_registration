@@ -52,9 +52,11 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       isConnecting = false;
       isDisconnecting = false;
       setState(() {});
-      // connection!.output.add(bytes);
       if (isConnecting) {
-        Fluttertoast.showToast(msg: "Conecting to ${server?.name}");
+        Fluttertoast.showToast(msg: "Connecting to ${server?.name}");
+        if(isConnected){
+          Fluttertoast.showToast(msg: "Connected to ${server?.name}");
+        }
       } else {
         Fluttertoast.showToast(msg: "Connection Lost");
       }
@@ -63,12 +65,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       } else {
         print('Disconnecting remotely');
       }
-      if (mounted) {
-        setState(() {});
-      }
-      Navigator.of(context).pop();
     }).catchError((error) {
-      Navigator.of(context).pop();
+      print("The error caught is : $error");
     });
   }
 
