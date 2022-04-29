@@ -1,4 +1,4 @@
-// ignore_for_file: unrelated_type_equality_checks, deprecated_member_use
+// ignore_for_file: unrelated_type_equality_checks, deprecated_member_use, avoid_print
 
 import 'dart:async';
 import 'dart:ffi';
@@ -10,10 +10,11 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:wapi/Build/build_lottie.dart';
+import 'package:wapi/screens/discovery.dart';
 import 'package:wapi/screens/entry.dart';
 import 'package:async/async.dart';
 import 'dart:convert';
-import 'DetailPage.dart';
+// import "package:flutter_blue/flutter_blue.dart";
 
 class Home extends StatefulWidget {
   final bool start;
@@ -24,6 +25,7 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> with WidgetsBindingObserver {
+  FlutterBluetoothSerial serial = FlutterBluetoothSerial.instance;
   BluetoothDevice? server;
   BluetoothState _bluetoothState = BluetoothState.UNKNOWN;
   BluetoothConnection? connection;
@@ -31,16 +33,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   static List<int> list = 'Emilio'.codeUnits;
   Uint8List bytes = Uint8List.fromList(list);
   bool isConnecting = true;
-
-  bool get isConnected => connection!.isConnected;
+  bool isConnected = true;
   bool isDisconnecting = false;
-
-  List<List<int>> chunks = <List<int>>[];
-  int contentLength = 0;
-  late Uint8List _bytes;
-
-  late RestartableTimer _timer;
-  // FlutterBluetoothSerialCharacteristic ?targetCharacteristic;
 
   @override
   void initState() {
@@ -50,38 +44,29 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     _stateChangeListener();
   }
 
-  void _onDataReceived(Uint8List data) {
-    if (data != null && data.length > 0) {
-      chunks.add(data);
-      contentLength += data.length;
-      _timer.reset();
-    }
-
-    print("Data Length: ${data.length}, chunks: ${chunks.length}");
-  }
-
-  _getBTConnection() {
-    BluetoothConnection.toAddress(server?.address).then((_connection) {
+  _getBTConnection() async {
+    print("The status of the connection: $isConnected");
+    print("The name of the server: ${server?.name}");
+    await BluetoothConnection.toAddress(server!.address).then((_connection) {
       connection = _connection;
       isConnecting = false;
       isDisconnecting = false;
       setState(() {});
-      connection?.input?.listen(_onDataReceived).onDone(() {
-        isConnecting
-            ? Text('Connecting to ${server?.name} ...')
-            : isConnected
-                ? Text('Connected with ${server?.name}')
-                : Text('Disconnected with ${server?.name}');
-        if (isDisconnecting) {
-          print('Disconnecting locally');
-        } else {
-          print('Disconnecting remotely');
-        }
-        if (mounted) {
-          setState(() {});
-        }
-        Navigator.of(context).pop();
-      });
+      // connection!.output.add(bytes);
+      if (isConnecting) {
+        Fluttertoast.showToast(msg: "Conecting to ${server?.name}");
+      } else {
+        Fluttertoast.showToast(msg: "Connection Lost");
+      }
+      if (isDisconnecting) {
+        print('Disconnecting locally');
+      } else {
+        print('Disconnecting remotely');
+      }
+      if (mounted) {
+        setState(() {});
+      }
+      Navigator.of(context).pop();
     }).catchError((error) {
       Navigator.of(context).pop();
     });
@@ -104,19 +89,19 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   }
 
   _getBTState() {
-    FlutterBluetoothSerial.instance.state.then((state) {
+    serial.state.then((state) {
       _bluetoothState = state;
       if (_bluetoothState.isEnabled) {
         _listBondedDevices();
+      } else {
+        print("The connection is disabled");
       }
       setState(() {});
     });
   }
 
   _stateChangeListener() {
-    FlutterBluetoothSerial.instance
-        .onStateChanged()
-        .listen((BluetoothState state) {
+    serial.onStateChanged().listen((BluetoothState state) {
       _bluetoothState = state;
       if (_bluetoothState.isEnabled) {
         _listBondedDevices();
@@ -129,24 +114,17 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   }
 
   _listBondedDevices() {
-    FlutterBluetoothSerial.instance
-        .getBondedDevices()
-        .then((List<BluetoothDevice> bondedDevices) {
+    serial.getBondedDevices().then((List<BluetoothDevice> bondedDevices) {
       devices = bondedDevices;
       setState(() {});
     });
-  }
-
-  Future send(Uint8List data) async {
-    connection?.output.add(data);
-    await connection?.output.allSent;
   }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     return Scaffold(
-        backgroundColor: Color.fromARGB(255, 255, 255, 255),
+        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
         body: SingleChildScrollView(
             child: SafeArea(
           child: Column(
@@ -173,11 +151,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                   ],
                 ),
               ),
-              // const Divider(
-              //   thickness: 2,
-              //   color: Colors.grey,
-              //   height:5,
-              // ),
               const Action(
                   fontSize: 25,
                   action: "Fetch",
@@ -241,7 +214,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                       color: const Color.fromARGB(255, 146, 146, 146),
                       borderRadius: BorderRadius.circular(20)),
                   child: SwitchListTile(
-                    activeColor: Color.fromARGB(255, 7, 65, 52),
+                    activeColor: const Color.fromARGB(255, 7, 65, 52),
                     title: Text('Enable Bluetooth',
                         style: GoogleFonts.roboto(
                             fontSize: 20,
@@ -317,8 +290,11 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                             enabled: true,
                             // rssi: _device.RSSI,
                             onTap: () {
-                              // _startCameraConnect(context, _device);
+                              setState(() {
+                                server = _device;
+                              });
                               _getBTConnection();
+                              // _startCameraConnect(context, _device);
                             },
                           ))
                       .toList()),
@@ -342,7 +318,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                       size: size,
                       actionString: "Send",
                       action: () {
-                        send(bytes);
+                        // send(bytes);
+                        Get.to(Discovery());
                       }),
                 ],
               ),
