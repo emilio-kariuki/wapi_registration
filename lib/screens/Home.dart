@@ -14,6 +14,10 @@ import 'package:wapi/screens/discovery.dart';
 import 'package:wapi/screens/entry.dart';
 import 'package:async/async.dart';
 import 'dart:convert';
+
+import 'package:wapi/screens/homme.dart';
+
+import 'chat.dart';
 // import "package:flutter_blue/flutter_blue.dart";
 
 class Home extends StatefulWidget {
@@ -24,17 +28,26 @@ class Home extends StatefulWidget {
   State<Home> createState() => _HomeState();
 }
 
+class _Message {
+  int whom;
+  String text;
+
+  _Message(this.whom, this.text);
+}
+
 class _HomeState extends State<Home> with WidgetsBindingObserver {
   FlutterBluetoothSerial serial = FlutterBluetoothSerial.instance;
   BluetoothDevice? server;
   BluetoothState _bluetoothState = BluetoothState.UNKNOWN;
-  BluetoothConnection? connection;
+  late BluetoothConnection connection;
   List<BluetoothDevice> devices = <BluetoothDevice>[];
   static List<int> list = 'Emilio'.codeUnits;
   Uint8List bytes = Uint8List.fromList(list);
   bool isConnecting = true;
   bool isConnected = true;
   bool isDisconnecting = false;
+  List<_Message> messages = [];
+  String _messageBuffer = '';
 
   @override
   void initState() {
@@ -44,17 +57,18 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     _stateChangeListener();
   }
 
-  _getBTConnection() async {
+  _getBTConnection(BluetoothDevice serverr) async {
     print("The status of the connection: $isConnected");
-    print("The name of the server: ${server?.name}");
-    await BluetoothConnection.toAddress(server!.address).then((_connection) {
+    print("The name of the server: ${serverr.name}");
+    await BluetoothConnection.toAddress(serverr.address).then((_connection) {
       connection = _connection;
       isConnecting = false;
       isDisconnecting = false;
       setState(() {});
+
       if (isConnecting) {
         Fluttertoast.showToast(msg: "Connecting to ${server?.name}");
-        if(isConnected){
+        if (connection.isConnected) {
           Fluttertoast.showToast(msg: "Connected to ${server?.name}");
         }
       } else {
@@ -277,6 +291,29 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                   ),
                 ],
               ),
+              ListTile(
+                  title: TextButton(
+                      child: const Text(
+                          'Connect to paired device to chat with ESP32'),
+                      onPressed: () async {
+                        final BluetoothDevice selectedDevice =
+                            await Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) {
+                              return DiscoveryPage();
+                            },
+                          ),
+                        );
+
+                        if (selectedDevice != null) {
+                          print('Discovery -> selected ' +
+                              selectedDevice.address);
+                          server = selectedDevice;
+                          _startChat(context, selectedDevice);
+                        } else {
+                          print('Discovery -> no device selected');
+                        }
+                      })),
               SizedBox(
                 height: size.height * 0.008,
               ),
@@ -288,10 +325,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                             enabled: true,
                             // rssi: _device.RSSI,
                             onTap: () {
-                              setState(() {
-                                server = _device;
-                              });
-                              _getBTConnection();
+                              // _getBTConnection(_device);
                               // _startCameraConnect(context, _device);
                             },
                           ))
@@ -331,6 +365,15 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   //     return DetailPage(server: server);
   //   }));
   // }
+  void _startChat(BuildContext context, BluetoothDevice server) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) {
+          return ChatPage(server: server);
+        },
+      ),
+    );
+  }
 }
 
 class Button extends StatelessWidget {
