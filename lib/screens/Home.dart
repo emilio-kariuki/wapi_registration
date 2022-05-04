@@ -1,7 +1,6 @@
-// ignore_for_file: unrelated_type_equality_checks, deprecated_member_use, avoid_print
+//ignore_for_file: unrelated_type_equality_checks, deprecated_member_use, avoid_print
 
 import 'dart:async';
-import 'dart:ffi';
 import 'dart:io';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'dart:typed_data';
@@ -10,6 +9,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:wapi/Build/build_lottie.dart';
+import 'package:wapi/screens/controller.dart';
 import 'package:wapi/screens/discovery.dart';
 import 'package:wapi/screens/entry.dart';
 import 'package:async/async.dart';
@@ -36,6 +36,7 @@ class _Message {
 }
 
 class _HomeState extends State<Home> with WidgetsBindingObserver {
+  
   FlutterBluetoothSerial serial = FlutterBluetoothSerial.instance;
   BluetoothDevice? server;
   BluetoothState _bluetoothState = BluetoothState.UNKNOWN;
@@ -48,6 +49,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   bool isDisconnecting = false;
   List<_Message> messages = [];
   String _messageBuffer = '';
+  // final BluetoothController controller =
+  //     Get.put(BluetoothController(connection, devices));
 
   @override
   void initState() {
@@ -294,13 +297,13 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
               ListTile(
                   title: TextButton(
                       child: const Text(
-                          'Connect to paired device to chat with ESP32'),
+                          'Connected to paired device to chat with ESP32'),
                       onPressed: () async {
                         final BluetoothDevice selectedDevice =
                             await Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (context) {
-                              return DiscoveryPage();
+                              return Discovery();
                             },
                           ),
                         );
@@ -325,7 +328,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                             enabled: true,
                             // rssi: _device.RSSI,
                             onTap: () {
-                              // _getBTConnection(_device);
+                              _getBTConnection(_device);
                               // _startCameraConnect(context, _device);
                             },
                           ))
@@ -348,7 +351,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                   Button(
                       width: 0.35,
                       size: size,
-                      actionString: "Send",
+                      actionString: "Sending",
                       action: () {
                         // send(bytes);
                         Get.to(Discovery());

@@ -1,3 +1,5 @@
+// ignore_for_file: prefer_typing_uninitialized_variables, avoid_print
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -22,15 +24,15 @@ class _Message {
 }
 
 class _ChatPage extends State<ChatPage> {
-  static final clientID = 0;
+  static const clientID = 0;
   var connection; //BluetoothConnection
 
   List<_Message> messages = [];
   String _messageBuffer = '';
 
   final TextEditingController textEditingController =
-      new TextEditingController();
-  final ScrollController listScrollController = new ScrollController();
+      TextEditingController();
+  final ScrollController listScrollController = ScrollController();
 
   bool isConnecting = true;
   bool isDisconnecting = false;
@@ -59,7 +61,7 @@ class _ChatPage extends State<ChatPage> {
         } else {
           print('Disconnected remotely!');
         }
-        if (this.mounted) {
+        if (mounted) {
           setState(() {});
         }
       });
@@ -91,9 +93,9 @@ class _ChatPage extends State<ChatPage> {
                 (text) {
                   return text == '/shrug' ? '¯\\_(ツ)_/¯' : text;
                 }(_message.text.trim()),
-                style: TextStyle(color: Colors.white)),
-            padding: EdgeInsets.all(12.0),
-            margin: EdgeInsets.only(bottom: 8.0, left: 8.0, right: 8.0),
+                style: const TextStyle(color: Colors.white)),
+            padding: const EdgeInsets.all(12.0),
+            margin: const EdgeInsets.only(bottom: 8.0, left: 8.0, right: 8.0),
             width: 222.0,
             decoration: BoxDecoration(
                 color:
@@ -212,7 +214,7 @@ class _ChatPage extends State<ChatPage> {
     text = text.trim();
     textEditingController.clear();
 
-    if (text.length > 0) {
+    if (text.isNotEmpty) {
       try {
         connection.output.add(utf8.encode(text + "\r\n"));
         await connection.output.allSent;
@@ -221,10 +223,10 @@ class _ChatPage extends State<ChatPage> {
           messages.add(_Message(clientID, text));
         });
 
-        Future.delayed(Duration(milliseconds: 333)).then((_) {
+        Future.delayed(const Duration(milliseconds: 333)).then((_) {
           listScrollController.animateTo(
               listScrollController.position.maxScrollExtent,
-              duration: Duration(milliseconds: 333),
+              duration: const Duration(milliseconds: 333),
               curve: Curves.easeOut);
         });
       } catch (e) {
